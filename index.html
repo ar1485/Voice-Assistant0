@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+        #command, #response {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Voice Assistant</h1>
+    <button id="record">🎤 Click to Speak</button>
+    <div id="command">Command: <span></span></div>
+    <div id="response">Response: <span></span></div>
+
+    <script>
+        const recordButton = document.getElementById('record');
+        const commandDiv = document.getElementById('command').querySelector('span');
+        const responseDiv = document.getElementById('response').querySelector('span');
+
+        // Record audio and send it to the server
+        recordButton.addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+            
+            recordButton.innerText = 'Recording...';
+            
+            mediaRecorder.ondataavailable = async (event) => {
+                const formData = new FormData();
+                formData.append('audio', event.data, 'audio.wav');
+
+                const response = await fetch('/process_audio', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                commandDiv.innerText = result.command || 'No command detected.';
+                responseDiv.innerText = result.response || 'No response.';
+                
+                recordButton.innerText = '🎤 Click to Speak';
+            };
+            
+            mediaRecorder.stop();
+        });
+    </script>
+</body>
+</html>
